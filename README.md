@@ -9,7 +9,7 @@
 - **Разработчик 3 (Backend & UI):** 
 
 ## 🛠 Стек технологий
-- **Язык разработки:** Python 3.10+
+- **Язык разработки:** Python 3.11+
 - **Анализ трафика:** Wireshark, Scapy, PyShark
 - **Machine Learning:** Scikit-learn, XGBoost, Pandas
 - **Backend API:** FastAPI

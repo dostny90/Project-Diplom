@@ -84,6 +84,9 @@ def predict(
         return {**database.predict_and_save(flow, detector), "saved": True}
     except ValueError as exc:
         raise HTTPException(422, f"Некорректные значения признаков: {exc}") from exc
+    except psycopg.DataError as exc:
+        # Например, "Src IP" не является IP-адресом — это ошибка запроса, а не базы
+        raise HTTPException(422, f"Некорректные данные потока: {exc}") from exc
     except psycopg.Error as exc:
         raise HTTPException(503, "База данных недоступна") from exc
 

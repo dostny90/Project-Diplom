@@ -64,6 +64,15 @@ def test_predict_returns_503_when_database_fails(client, with_database, monkeypa
     assert client.post("/predict", json=SAMPLE_FLOW).status_code == 503
 
 
+def test_predict_returns_422_for_invalid_flow_data(client, with_database, monkeypatch):
+    def bad_ip(flow, detector):
+        raise psycopg.errors.InvalidTextRepresentation('invalid input syntax for type inet: "abc"')
+
+    monkeypatch.setattr(main.database, "predict_and_save", bad_ip)
+    response = client.post("/predict", json={**SAMPLE_FLOW, "Src IP": "abc"})
+    assert response.status_code == 422
+
+
 def test_predict_rejects_empty_flow(client):
     assert client.post("/predict", json={}).status_code == 422
 
