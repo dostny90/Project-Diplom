@@ -72,6 +72,39 @@ def initialize_database() -> None:
         connection.execute(schema_path.read_text(encoding="utf-8"))
 
 
+def ping() -> bool:
+    """Return True if PostgreSQL at DATABASE_URL accepts connections."""
+    import psycopg
+
+    try:
+        with psycopg.connect(_db_url(), connect_timeout=3) as connection:
+            connection.execute("SELECT 1")
+    except psycopg.Error:
+        return False
+    return True
+
+
+def list_anomalies(limit: int = 50) -> list[dict[str, Any]]:
+    """Return the most recent anomaly predictions joined with their flows."""
+    from psycopg import connect
+    from psycopg.rows import dict_row
+
+    with connect(_db_url(), row_factory=dict_row) as connection:
+        return connection.execute(
+            """SELECT p.id AS prediction_id, p.flow_id, p.model_name,
+                      p.confidence::float AS confidence, p.created_at,
+                      f.observed_at, host(f.source_ip) AS source_ip, f.source_port,
+                      host(f.destination_ip) AS destination_ip, f.destination_port,
+                      f.protocol, f.raw_label
+               FROM anomaly_predictions AS p
+               JOIN network_flows AS f ON f.id = p.flow_id
+               WHERE p.is_anomaly
+               ORDER BY p.created_at DESC
+               LIMIT %s""",
+            (limit,),
+        ).fetchall()
+
+
 def save_prediction(
     input_data: dict[str, Any],
     prediction: dict[str, Any],
